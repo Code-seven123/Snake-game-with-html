@@ -1,0 +1,283 @@
+<!doctype html>
+<html> 
+<head> 
+<meta charset="UTF-8"> 
+<meta name="viewport" content="width=device-width, initial-scale=1"> 
+<title>Intelligent Snake</title> 
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.dNone{
+    display: none;
+}
+input{
+    border: 2px solid #1FB9E5;
+    margin-bottom: 10vw;
+    width: 50px;
+    height: 50px;
+}
+.main-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #2a1c0e;
+}
+
+.snake-board {
+  display: grid;
+  width: 95vw;
+  height: 95vw;
+  border: 3px solid #b5906f;
+  background-color: #07080F;
+  margin: 0px 0px 12px 0px;
+  grid-template-rows: repeat(28, 1fr);
+  grid-template-columns: repeat(28, 1fr);
+}
+
+.keycontrol {
+  width: 95vw;
+  height: 30vh;
+  position: relative;
+}
+
+.btn {
+  position: absolute;
+  width: 29vw;
+  background-color: #0F100F;
+  color: #c3af98;
+  height: 10vh;
+  border: 2px solid #ff7f00;
+  font-weight: 900;
+  font-size: 18px;
+}
+
+#UP {
+  top: 4vh;
+  left: 33vw;
+}
+
+#DOWN {
+  bottom: 4vh;
+  left: 33vw;
+}
+
+#RIGHT {
+  top: 10vh;
+  right: 2vw;
+}
+
+#LEFT {
+  top: 10vh;
+  left: 2vw;
+}
+
+.head {
+  background-color: #08E02A;
+}
+
+.snake{
+  background-color: #ACED60;
+  border: 1px solid #05E368;
+}
+
+.food {
+  background-color: #FF0A0A;
+}
+span{
+	text-align: center;
+	position: fixed;
+	bottom: 60%;
+	border: 2px solid grey;
+	margin-left: 60px;
+	margin-right: 50px;
+}
+span p{
+	font-size: 40px;
+	color: white;
+	text-shadow: 2px 2px 2px blue, 3px 3px 4px red;
+    margin: 20px;
+}
+</style>
+</head> 
+<body> 
+	<span class="dNone">
+         <p><b>Game Over</b></p>
+<!--<img src="multimedia/image/gameOver.png" alt="game over">--></span>
+    <div class="main-container"> 
+        <!-- <input type="number" id="sc" readonly> -->
+        <div class="snake-board"></div> 
+        <div class="keycontrol"> 
+            <button class="btn" id="UP">UP</button> 
+            <button class="btn" id="DOWN">DOWN</button> 
+            <button class="btn" id="LEFT">LEFT</button> 
+            <button class="btn" id="RIGHT">RIGHT</button> 
+        </div> 
+    </div> 
+<script type="text/javascript">
+
+// Getting the reference of dom 
+// elements
+const btnUp = document.querySelector('#UP');
+const btnDown = document.querySelector('#DOWN');
+const btnLeft = document.querySelector('#LEFT');
+const btnRight = document.querySelector('#RIGHT');
+const board = document.querySelector(".snake-board");
+const btnAll = document.querySelectorAll('button');
+const span = document.querySelector('span');
+// Variables
+let up = false;
+let down = false;
+let left = false;
+let right = false;
+
+const notif = {
+	click: function(){
+		return new Audio('multimedia/audio/cl.mp3').play();
+	},
+	gameOver: function(){
+		return new Audio('multimedia/audio/go.mp3').play()
+	}
+};
+
+
+let speed = 6;
+let lastPaintTime = 0;
+
+// Snake body array
+let snakeArr = [{ x: 14, y: 3 }];
+let food = { x: Math.round(Math.random() * (26 - 1) + 1), y: Math.round(Math.random() * (26 - 1) + 1) };
+// Direction
+let inputDir = { x: 0, y: 0 };
+
+
+
+// Main function for game loop
+
+
+
+function main(ctime) {
+  window.requestAnimationFrame(main);
+  if ((ctime - lastPaintTime) / 1000 < 1 / speed) {
+    return;
+  }
+  lastPaintTime = ctime;
+  gameEngine();
+
+}
+
+function gameOverMsg(string){
+	setTimeout(() => {
+        span.classList.remove('dNone');}, 900);
+	setTimeout(() => {
+		span.classList.add('dNone');}, 3000);
+}
+
+
+function gameEngine() {
+
+  // Updating the snake array
+  
+  //Game Over
+  if (isCollide(snakeArr)) {
+    inputDir = { x: 0, y: 0 };
+    notif.gameOver()
+    gameOverMsg()
+    console.log("Game over! To play again press any key");
+    snakeArr = [{ x: 14, y: 3 }];
+  }
+
+  if (snakeArr[0].x === food.x && snakeArr[0].y === food.y) {
+    snakeArr.unshift({ x: snakeArr[0].x + inputDir.x, y: snakeArr[0].y + inputDir.y });
+    let a = 2;
+    let b = 20;
+
+    let j = 1;
+    while (snakeArr[j].x === food.x && snakeArr[j].y === food.y) {
+      food = { x: Math.round(Math.random() * (b - a) + a), y: Math.round(Math.random() * (b - a) + a) };
+      j++;
+    }
+  }
+
+  for (let i = snakeArr.length - 2; i >= 0; i--) {
+    snakeArr[i + 1] = { ...snakeArr[i] };
+  }
+
+  snakeArr[0].x += inputDir.x;
+  snakeArr[0].y += inputDir.y;
+
+  // Display snake head and food
+  board.innerHTML = "";
+  snakeArr.forEach((e, index) => {
+    let snakeElement = document.createElement("div");
+    snakeElement.style.gridRowStart = e.y;
+    snakeElement.style.gridColumnStart = e.x;
+    if (index === 0) {
+      snakeElement.classList.add("head");
+    }
+    else {
+      snakeElement.classList.add("snake");
+    }
+    board.appendChild(snakeElement);
+  });
+
+  let foodElement = document.createElement("div");
+  foodElement.style.gridRowStart = food.y;
+  foodElement.style.gridColumnStart = food.x;
+  
+  foodElement.classList.add("food");
+  board.appendChild(foodElement);
+
+}
+
+function isCollide(snakeArr) {
+
+
+  for (let i = 1; i < snakeArr.length; i++) {
+    if (snakeArr[i].x === snakeArr[0].x && snakeArr[i].y === snakeArr[0].y) {
+      return true;
+    }
+  }
+
+  if (snakeArr[0].x >= 28 || snakeArr[0].x <= 0 || snakeArr[0].y >= 28 || snakeArr[0].y <= 0) {
+    return true;
+  }
+
+  return false;
+}
+
+
+window.requestAnimationFrame(main);
+
+btnUp.addEventListener("click", () => {
+  inputDir.x = 0;
+  inputDir.y = -1;
+  notif.click();
+});
+
+btnDown.addEventListener("click", () => {
+  inputDir.x = 0;
+  inputDir.y = 1;
+  notif.click();
+});
+
+btnLeft.addEventListener("click", () => {
+  inputDir.x = -1;
+  inputDir.y = 0;
+  notif.click();
+});
+btnRight.addEventListener("click", () => {
+  inputDir.x = 1;
+  inputDir.y = 0;
+  notif.click();
+});
+
+
+</script> &gt; 
+</body>
+</html>
